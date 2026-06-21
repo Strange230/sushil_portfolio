@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>S.AI — Personal System</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181c;
+    --surface2: #222228;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0eff4;
+    --muted: #888799;
+    --hint: #55546a;
+    --purple: #7F77DD;
+    --purple-light: #AFA9EC;
+    --purple-dim: #2a2847;
+    --purple-bg: #1a1830;
+    --teal: #1D9E75;
+    --teal-bg: #0c2a20;
+    --coral: #D85A30;
+    --coral-bg: #2a1208;
+    --user-bubble: #534AB7;
+    --user-text: #e8e6ff;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+  .logo span { color: var(--purple); }
+
+  .mode-tabs {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 5px 13px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    background: transparent;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .tab:hover { border-color: var(--border2); color: var(--text); }
+  .tab.active {
+    background: var(--purple-bg);
+    border-color: var(--purple);
+    color: var(--purple-light);
+    font-weight: 500;
+  }
+  .tab.active.coding { background: var(--teal-bg); border-color: var(--teal); color: #5DCAA5; }
+  .tab.active.security { background: var(--coral-bg); border-color: var(--coral); color: #F0997B; }
+
+  .header-actions { display: flex; gap: 6px; align-items: center; }
+
+  .icon-btn {
+    padding: 5px 10px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover { border-color: var(--border2); color: var(--text); }
+
+  /* Setup panel */
+  .setup-panel {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 18px;
+    display: none;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .setup-panel.visible { display: flex; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 200px; }
+  .field label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .field input {
+    padding: 8px 11px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus { border-color: var(--purple); }
+  .field input::placeholder { color: var(--hint); }
+
+  .save-btn {
+    padding: 8px 18px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--purple);
+    background: var(--purple-bg);
+    color: var(--purple-light);
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .save-btn:hover { background: var(--purple-dim); }
+
+  /* Mode indicator */
+  .mode-bar {
+    padding: 6px 18px;
+    background: var(--surface2);
+    border-bottom: 0.5px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mode-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--purple);
+  }
+  .mode-dot.coding { background: var(--teal); }
+  .mode-dot.security { background: var(--coral); }
+
+  /* Chat area */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  .msg-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .msg-row.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .avatar.ai { background: var(--purple-dim); color: var(--purple-light); border: 0.5px solid var(--purple); }
+  .avatar.user { background: var(--user-bubble); color: var(--user-text); }
+
+  .bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: var(--radius-lg);
+    font-size: 14px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .bubble.ai {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    color: var(--text);
+    border-top-left-radius: 3px;
+  }
+  .bubble.user {
+    background: var(--user-bubble);
+    color: var(--user-text);
+    border-top-right-radius: 3px;
+  }
+
+  /* Code blocks inside AI messages */
+  .bubble.ai code {
+    background: var(--surface2);
+    border: 0.5px solid var(--border2);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--purple-light);
+  }
+  .bubble.ai pre {
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    overflow-x: auto;
+    margin: 8px 0;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #c8c6e0;
+  }
+
+  .system-msg {
+    text-align: center;
+    font-size: 11px;
+    color: var(--hint);
+    padding: 2px 0;
+  }
+
+  /* Typing indicator */
+  .typing-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .typing-bubble {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    border-top-left-radius: 3px;
+    padding: 12px 16px;
+    display: none;
+    gap: 4px;
+    align-items: center;
+  }
+  .typing-bubble.visible { display: flex; }
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--purple);
+    animation: bounce 1.2s infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* Input area */
+  .input-wrap {
+    background: var(--surface);
+    border-top: 0.5px solid var(--border);
+    padding: 12px 18px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    position: sticky;
+    bottom: 0;
+  }
+
+  .input-wrap textarea {
+    flex: 1;
+    padding: 10px 13px;
+    border-radius: var(--radius-lg);
+    border: 0.5px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 14px;
+    resize: none;
+    font-family: inherit;
+    line-height: 1.5;
+    max-height: 140px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-wrap textarea:focus { border-color: var(--purple); }
+  .input-wrap textarea::placeholder { color: var(--hint); }
+
+  .send-btn {
+    padding: 10px 20px;
+    border-radius: var(--radius-lg);
+    border: none;
+    background: var(--purple);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .send-btn:hover { background: #6a61c4; }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .send-btn:active:not(:disabled) { transform: scale(0.97); }
+
+  /* Welcome screen */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 10px;
+    color: var(--muted);
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .welcome-logo { font-size: 36px; font-weight: 700; color: var(--purple); letter-spacing: -1px; }
+  .welcome-sub { font-size: 13px; color: var(--hint); max-width: 320px; }
+  .welcome-modes {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .welcome-chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 0.5px solid var(--border2);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Scrollbar */
+  .chat-area::-webkit-scrollbar { width: 4px; }
+  .chat-area::-webkit-scrollbar-track { background: transparent; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  @media (max-width: 520px) {
+    .bubble { max-width: 90%; }
+    .tab span { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">S<span>.</span>AI</div>
+  <div class="mode-tabs">
+    <button class="tab active" id="tab-planning" onclick="setMode('planning')">&#9632; <span>Planning</span></button>
+    <button class="tab coding" id="tab-coding" onclick="setMode('coding')">&#9632; <span>Coding</span></button>
+    <button class="tab security" id="tab-security" onclick="setMode('security')">&#9632; <span>Security</span></button>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="clearChat()">&#10005; Clear</button>
+    <button class="icon-btn" onclick="toggleSetup()">&#9881; Setup</button>
+  </div>
+</div>
+
+<div class="setup-panel" id="setupPanel">
+  <div class="field">
+    <label>GLM API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-..." />
+  </div>
+  <div class="field">
+    <label>Model Name</label>
+    <input type="text" id="modelName" placeholder="e.g. glm-4, glm-4-flash, glm-z1-flash" />
+  </div>
+  <button class="save-btn" onclick="saveConfig()">Save & Close</button>
+</div>
+
+<div class="mode-bar">
+  <div class="mode-dot" id="modeDot"></div>
+  <span id="modeLabel">Planning mode — strategy, roadmaps, decisions</span>
+</div>
+
+<div class="chat-area" id="chatArea">
+  <div class="welcome" id="welcomeScreen">
+    <div class="welcome-logo">S.AI</div>
+    <div style="font-size:14px;color:var(--muted);">Your personal AI system</div>
+    <div class="welcome-sub">Built for planning, coding, and security thinking. Open Setup to connect your GLM key.</div>
+    <div class="welcome-modes">
+      <div class="welcome-chip">&#9632; Strategic Planning</div>
+      <div class="welcome-chip">&#9632; Code &amp; Debug</div>
+      <div class="welcome-chip">&#9632; Vulnerability Analysis</div>
+    </div>
+  </div>
+</div>
+
+<div class="typing-row" id="typingRow" style="padding:0 18px 10px; display:none;">
+  <div class="avatar ai">AI</div>
+  <div class="typing-bubble" id="typingBubble">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+</div>
+
+<div class="input-wrap">
+  <textarea id="msgInput" rows="1" placeholder="Ask anything..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+  <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+let mode = 'planning';
+let history = [];
+let cfg = {
+  key: localStorage.getItem('sai_glm_key') || '',
+  model: localStorage.getItem('sai_glm_model') || ''
+};
+
+const modeInfo = {
+  planning: { label: 'Planning mode — strategy, roadmaps, decisions', dot: '' },
+  coding:   { label: 'Coding mode — build, debug, architecture', dot: 'coding' },
+  security: { label: 'Security mode — vulnerabilities, critical thinking', dot: 'security' }
+};
+
+const systemPrompts = {
+  planning: `You are Sushil's personal strategic AI. Help him plan projects, break down goals, create roadmaps, think through decisions, and organize ideas clearly. Be direct and structured. Think in systems. When given a vague idea, ask one clarifying question then produce a clear action plan. Sushil is a college student focused on business, sales, marketing, and entrepreneurship. Help him think like a founder and operator. Keep responses concise but complete.`,
+  coding: `You are Sushil's personal coding assistant. Help him build projects, debug code, explain concepts, write clean code, and architect systems. He learns by doing and uses AI tools to execute ideas without formal CS training. Be practical — give working code with brief explanations. Prefer simple, readable solutions. If something could be built better, suggest it. Ask about the stack or language if unclear. Format code blocks properly.`,
+  security: `You are Sushil's personal security and critical thinking advisor. Help him identify vulnerabilities, attack surfaces, logical flaws, and weaknesses in systems, ideas, code, or plans. Think like an attacker and a strategist simultaneously. Be direct about risks. When reviewing a system or plan, give a structured breakdown: what's strong, what's weak, what could be exploited, and how to fix it. Apply this same critical lens to business ideas and technical architectures.`
+};
+
+if (cfg.key) document.getElementById('apiKey').value = cfg.key;
+if (cfg.model) document.getElementById('modelName').value = cfg.model;
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + m).classList.add('active');
+  const dot = document.getElementById('modeDot');
+  dot.className = 'mode-dot ' + (modeInfo[m].dot);
+  document.getElementById('modeLabel').textContent = modeInfo[m].label;
+  addSystemMsg('Switched to ' + m.charAt(0).toUpperCase() + m.slice(1) + ' mode');
+}
+
+function toggleSetup() {
+  document.getElementById('setupPanel').classList.toggle('visible');
+}
+
+function saveConfig() {
+  cfg.key = document.getElementById('apiKey').value.trim();
+  cfg.model = document.getElementById('modelName').value.trim();
+  localStorage.setItem('sai_glm_key', cfg.key);
+  localStorage.setItem('sai_glm_model', cfg.model);
+  document.getElementById('setupPanel').classList.remove('visible');
+  addSystemMsg('Config saved. Ready.');
+}
+
+function hideWelcome() {
+  const w = document.getElementById('welcomeScreen');
+  if (w) w.remove();
+}
+
+function addSystemMsg(txt) {
+  hideWelcome();
+  const el = document.createElement('div');
+  el.className = 'system-msg';
+  el.textContent = txt;
+  document.getElementById('chatArea').appendChild(el);
+  scrollBottom();
+}
+
+function addMsg(role, text) {
+  hideWelcome();
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + (role === 'user' ? 'user' : '');
+
+  const av = document.createElement('div');
+  av.className = 'avatar ' + (role === 'user' ? 'user' : 'ai');
+  av.textContent = role === 'user' ? 'S' : 'AI';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ' + (role === 'user' ? 'user' : 'ai');
+
+  if (role === 'assistant') {
+    bubble.innerHTML = formatResponse(text);
+  } else {
+    bubble.textContent = text;
+  }
+
+  row.appendChild(av);
+  row.appendChild(bubble);
+  document.getElementById('chatArea').appendChild(row);
+  scrollBottom();
+}
+
+function formatResponse(text) {
+  // Basic markdown-like formatting
+  let html = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    // Code blocks
+    .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Line breaks
+    .replace(/\n/g, '<br>');
+  return html;
+}
+
+function scrollBottom() {
+  const c = document.getElementById('chatArea');
+  c.scrollTop = c.scrollHeight;
+}
+
+function clearChat() {
+  history = [];
+  document.getElementById('chatArea').innerHTML = '<div class="system-msg">Chat cleared.</div>';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+async function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!cfg.key) { addSystemMsg('Open Setup and enter your GLM API key first.'); return; }
+  if (!cfg.model) { addSystemMsg('Open Setup and enter your model name first.'); return; }
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+
+  addMsg('user', text);
+  history.push({ role: 'user', content: text });
+
+  const typingRow = document.getElementById('typingRow');
+  const typingBubble = document.getElementById('typingBubble');
+  typingRow.style.display = 'flex';
+  typingBubble.classList.add('visible');
+  scrollBottom();
+
+  try {
+    const res = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + cfg.key
+      },
+      body: JSON.stringify({
+        model: cfg.model,
+        messages: [
+          { role: 'system', content: systemPrompts[mode] },
+          ...history
+        ],
+        max_tokens: 2000,
+        temperature: 0.7
+      })
+    });
+
+    const data = await res.json();
+    typingRow.style.display = 'none';
+    typingBubble.classList.remove('visible');
+
+    if (data.choices && data.choices[0]) {
+      const reply = data.choices[0].message.content;
+      history.push({ role: 'assistant', content: reply });
+      addMsg('assistant', reply);
+    } else {
+      const errMsg = data.error?.message || 'Unexpected response. Check your API key and model name.';
+      addSystemMsg('Error: ' + errMsg);
+    }
+  } catch (e) {
+    typingRow.style.display = 'none';
+    typingBubble.classList.remove('visible');
+    addSystemMsg('Network error. Check your API key or connection.');
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+// Focus input on load
+document.getElementById('msgInput').focus();
+</script>
+</body>
+</html>
